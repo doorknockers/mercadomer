@@ -3,37 +3,30 @@ import React, { useState, useEffect } from 'react';
 function BitcoinPrice({ priceInMxn, showFullDetails = false }) {
   const [btcData, setBtcData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
-    convertToBtc();
-  }, [priceInMxn]);
-
-  const convertToBtc = async () => {
-    try {
-      setLoading(true);
-      setError(null);
+    const mockConversion = () => {
+      const btcRateUSD = 45000;
+      const usdMxnRate = 18.5;
+      const btcRateMXN = btcRateUSD * usdMxnRate;
+      const amountBtc = priceInMxn / btcRateMXN;
       
-      const response = await fetch('https://dxcyjoabcqsnpkqalqpd.supabase.co/functions/v1/bitcoin-api/convert', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount_mxn: priceInMxn })
+      setBtcData({
+        amount_btc: amountBtc,
+        btc_rate_usd: btcRateUSD,
+        formatted_time: new Date().toLocaleString('es-MX', {
+          hour: '2-digit',
+          minute: '2-digit',
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric'
+        })
       });
-      
-      const data = await response.json();
-      
-      if (data.success) {
-        setBtcData(data.data);
-      } else {
-        setError('Error al obtener precio BTC');
-      }
-    } catch (error) {
-      console.error('Error converting to BTC:', error);
-      setError('Error de conexión');
-    } finally {
       setLoading(false);
-    }
-  };
+    };
+
+    setTimeout(mockConversion, 500);
+  }, [priceInMxn]);
 
   if (loading) {
     return (
@@ -43,7 +36,7 @@ function BitcoinPrice({ priceInMxn, showFullDetails = false }) {
     );
   }
 
-  if (error || !btcData) {
+  if (!btcData) {
     return (
       <div className={`${showFullDetails ? 'text-sm' : 'text-xs'} text-gray-500`}>
         🟡 No disponible en BTC
@@ -58,12 +51,6 @@ function BitcoinPrice({ priceInMxn, showFullDetails = false }) {
           <span className="text-lg font-semibold text-orange-800">
             🟡 {btcData.amount_btc.toFixed(8)} BTC
           </span>
-          <button
-            onClick={convertToBtc}
-            className="text-xs text-orange-600 hover:text-orange-700 underline"
-          >
-            Actualizar
-          </button>
         </div>
         <div className="text-xs text-orange-600">
           <div>Tasa: ₿1 = ${btcData.btc_rate_usd.toLocaleString()} USD</div>
@@ -85,4 +72,5 @@ function BitcoinPrice({ priceInMxn, showFullDetails = false }) {
   );
 }
 
+export default BitcoinPrice;
 window.BitcoinPrice = BitcoinPrice;

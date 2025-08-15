@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router';
 
-function Home() {
+function Home({ navigate }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -18,81 +17,108 @@ function Home() {
   const [limit] = useState(20);
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(true);
-  const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem('comprameXUser') || '{}');
   const isLoggedIn = !!user.id;
 
   useEffect(() => {
     fetchCategories();
-    searchProducts(true);
+    loadSampleProducts();
   }, []);
 
   const fetchCategories = async () => {
     try {
-      const response = await fetch('https://dxcyjoabcqsnpkqalqpd.supabase.co/functions/v1/categories-api');
-      const data = await response.json();
-      if (data.success) {
-        setCategories(data.data);
-      }
+      const mockCategories = [
+        { id: 1, name: 'Electrónicos', slug: 'electronics' },
+        { id: 2, name: 'Ropa', slug: 'clothing' },
+        { id: 3, name: 'Hogar', slug: 'home' },
+        { id: 4, name: 'Deportes', slug: 'sports' },
+        { id: 5, name: 'Vehículos', slug: 'vehicles' }
+      ];
+      setCategories(mockCategories);
     } catch (error) {
       console.error('Error fetching categories:', error);
     }
   };
 
-  const searchProducts = async (reset = false) => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams({
-        search: searchQuery,
-        category: filters.category,
-        state: filters.state,
-        city: filters.city,
-        colonia: filters.colonia,
-        minPrice: filters.minPrice,
-        maxPrice: filters.maxPrice,
-        isLoggedIn: isLoggedIn.toString(),
-        limit: limit.toString(),
-        offset: (reset ? 0 : offset).toString()
-      });
-
-      const response = await fetch(
-        `https://dxcyjoabcqsnpkqalqpd.supabase.co/functions/v1/products-api?${params}`
-      );
-      const data = await response.json();
-      
-      if (data.success) {
-        if (reset) {
-          setProducts(data.data);
-          setOffset(limit);
-        } else {
-          setProducts(prev => [...prev, ...data.data]);
-          setOffset(prev => prev + limit);
-        }
-        setHasMore(data.data.length === limit);
+  const loadSampleProducts = () => {
+    const sampleProducts = [
+      {
+        id: 1,
+        title: 'iPhone 13 Pro Max 256GB',
+        price_mxn: 18000,
+        colonia: 'Roma Norte',
+        city: 'Ciudad de México',
+        state: 'CDMX',
+        primary_image: 'https://picsum.photos/400/400?random=1',
+        seller: isLoggedIn ? { nickname: 'TechSeller', id: 2 } : null
+      },
+      {
+        id: 2,
+        title: 'Bicicleta de Montaña Trek',
+        price_mxn: 12500,
+        colonia: 'Condesa',
+        city: 'Ciudad de México', 
+        state: 'CDMX',
+        primary_image: 'https://picsum.photos/400/400?random=2',
+        seller: isLoggedIn ? { nickname: 'BikeExpert', id: 3 } : null
+      },
+      {
+        id: 3,
+        title: 'MacBook Air M2 512GB',
+        price_mxn: 28000,
+        colonia: 'Polanco',
+        city: 'Ciudad de México',
+        state: 'CDMX', 
+        primary_image: 'https://picsum.photos/400/400?random=3',
+        seller: isLoggedIn ? { nickname: 'AppleFan', id: 4 } : null
+      },
+      {
+        id: 4,
+        title: 'PlayStation 5 con 2 controles',
+        price_mxn: 15000,
+        colonia: 'Coyoacán',
+        city: 'Ciudad de México',
+        state: 'CDMX',
+        primary_image: 'https://picsum.photos/400/400?random=4',
+        seller: isLoggedIn ? { nickname: 'GamerPro', id: 5 } : null
+      },
+      {
+        id: 5,
+        title: 'Sofa 3 plazas como nuevo',
+        price_mxn: 8500,
+        colonia: 'Santa Fe',
+        city: 'Ciudad de México',
+        state: 'CDMX',
+        primary_image: 'https://picsum.photos/400/400?random=5',
+        seller: isLoggedIn ? { nickname: 'HomeDecor', id: 6 } : null
+      },
+      {
+        id: 6,
+        title: 'Guitarra Fender Stratocaster',
+        price_mxn: 22000,
+        colonia: 'Narvarte',
+        city: 'Ciudad de México',
+        state: 'CDMX',
+        primary_image: 'https://picsum.photos/400/400?random=6',
+        seller: isLoggedIn ? { nickname: 'MusicLover', id: 7 } : null
       }
-    } catch (error) {
-      console.error('Error searching products:', error);
-    } finally {
-      setLoading(false);
-    }
+    ];
+    setProducts(sampleProducts);
+  };
+
+  const searchProducts = () => {
+    // Simulate search with current products
+    loadSampleProducts();
   };
 
   const handleSearch = () => {
-    setOffset(0);
-    searchProducts(true);
+    searchProducts();
   };
 
   const handleFilterChange = (key, value) => {
     const newFilters = { ...filters, [key]: value };
     setFilters(newFilters);
-    setOffset(0);
-    setTimeout(() => searchProducts(true), 300);
-  };
-
-  const loadMore = () => {
-    if (!loading && hasMore) {
-      searchProducts(false);
-    }
+    setTimeout(() => searchProducts(), 300);
   };
 
   return (
@@ -256,7 +282,7 @@ function Home() {
 
         {/* Results */}
         <div className="bg-white rounded-2xl shadow-xl p-6">
-          {loading && products.length === 0 ? (
+          {loading ? (
             <div className="text-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
               <p className="text-gray-600">Buscando productos...</p>
@@ -275,27 +301,15 @@ function Home() {
             <>
               <div className="mb-6">
                 <h3 className="text-2xl font-bold text-gray-800">
-                  Resultados ({products.length})
+                  Productos Destacados ({products.length})
                 </h3>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {products.map(product => (
-                  <ProductCard key={product.id} product={product} isLoggedIn={isLoggedIn} />
+                  <ProductCard key={product.id} product={product} isLoggedIn={isLoggedIn} navigate={navigate} />
                 ))}
               </div>
-
-              {hasMore && (
-                <div className="text-center mt-8">
-                  <button
-                    onClick={loadMore}
-                    disabled={loading}
-                    className="bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
-                  >
-                    {loading ? 'Cargando...' : 'Cargar más productos'}
-                  </button>
-                </div>
-              )}
             </>
           )}
         </div>
@@ -304,9 +318,7 @@ function Home() {
   );
 }
 
-function ProductCard({ product, isLoggedIn }) {
-  const navigate = useNavigate();
-  
+function ProductCard({ product, isLoggedIn, navigate }) {
   return (
     <div className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow cursor-pointer border border-gray-100">
       <div onClick={() => navigate(`/product/${product.id}`)}>
@@ -333,7 +345,7 @@ function ProductCard({ product, isLoggedIn }) {
             <div className="text-2xl font-bold text-green-600 mb-1">
               ${product.price_mxn.toLocaleString()} MXN
             </div>
-            <window.BitcoinPrice priceInMxn={product.price_mxn} />
+            <BitcoinPrice priceInMxn={product.price_mxn} />
           </div>
           
           <div className="text-sm text-gray-600 mb-3">
@@ -359,4 +371,79 @@ function ProductCard({ product, isLoggedIn }) {
   );
 }
 
+// Simple Bitcoin Price Component
+function BitcoinPrice({ priceInMxn, showFullDetails = false }) {
+  const [btcData, setBtcData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Mock Bitcoin conversion (in real app, would call API)
+    const mockConversion = () => {
+      const btcRateUSD = 45000; // Mock BTC price in USD
+      const usdMxnRate = 18.5; // Mock USD to MXN rate
+      const btcRateMXN = btcRateUSD * usdMxnRate;
+      const amountBtc = priceInMxn / btcRateMXN;
+      
+      setBtcData({
+        amount_btc: amountBtc,
+        btc_rate_usd: btcRateUSD,
+        formatted_time: new Date().toLocaleString('es-MX', {
+          hour: '2-digit',
+          minute: '2-digit',
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric'
+        })
+      });
+      setLoading(false);
+    };
+
+    setTimeout(mockConversion, 500);
+  }, [priceInMxn]);
+
+  if (loading) {
+    return (
+      <div className={`${showFullDetails ? 'text-sm' : 'text-xs'} text-gray-500`}>
+        🟡 Calculando precio en BTC...
+      </div>
+    );
+  }
+
+  if (!btcData) {
+    return (
+      <div className={`${showFullDetails ? 'text-sm' : 'text-xs'} text-gray-500`}>
+        🟡 No disponible en BTC
+      </div>
+    );
+  }
+
+  if (showFullDetails) {
+    return (
+      <div className="bg-gradient-to-r from-orange-50 to-yellow-50 border border-orange-200 rounded-lg p-4">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-lg font-semibold text-orange-800">
+            🟡 {btcData.amount_btc.toFixed(8)} BTC
+          </span>
+        </div>
+        <div className="text-xs text-orange-600">
+          <div>Tasa: ₿1 = ${btcData.btc_rate_usd.toLocaleString()} USD</div>
+          <div className="mt-1">
+            Calculado: {btcData.formatted_time}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="text-xs text-gray-600">
+      🟡 {btcData.amount_btc.toFixed(8)} BTC
+      <div className="text-xs text-gray-400 mt-1">
+        {btcData.formatted_time}
+      </div>
+    </div>
+  );
+}
+
+export default Home;
 window.Home = Home;

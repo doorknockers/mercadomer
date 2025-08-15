@@ -1,11 +1,9 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router';
 
-function Login() {
+function Login({ navigate }) {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const navigate = useNavigate();
 
   const handleLogin = async () => {
     if (!email.trim()) {
@@ -16,24 +14,21 @@ function Login() {
     setLoading(true);
     setError('');
 
-    try {
-      const response = await fetch(
-        `https://dxcyjoabcqsnpkqalqpd.supabase.co/functions/v1/users-api?email=${encodeURIComponent(email)}`
-      );
-      const data = await response.json();
+    // Mock login for demo purposes
+    setTimeout(() => {
+      const mockUser = {
+        id: 1,
+        email: email,
+        nickname: email.split('@')[0],
+        colonia: 'Roma Norte',
+        city: 'Ciudad de México',
+        state: 'CDMX'
+      };
       
-      if (data.success && data.data) {
-        localStorage.setItem('comprameXUser', JSON.stringify(data.data));
-        navigate('/');
-      } else {
-        setError('No se encontró una cuenta con este email. ¿Necesitas registrarte?');
-      }
-    } catch (error) {
-      console.error('Error logging in:', error);
-      setError('Error al iniciar sesión. Intenta de nuevo.');
-    } finally {
+      localStorage.setItem('comprameXUser', JSON.stringify(mockUser));
+      navigate('/');
       setLoading(false);
-    }
+    }, 1000);
   };
 
   return (
@@ -101,4 +96,5 @@ function Login() {
   );
 }
 
+export default Login;
 window.Login = Login;

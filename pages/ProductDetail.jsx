@@ -1,13 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router';
 
-function ProductDetail() {
-  const { id } = useParams();
-  const navigate = useNavigate();
+function ProductDetail({ id, navigate }) {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showChat, setShowChat] = useState(false);
-  const [conversationId, setConversationId] = useState(null);
   const [paymentLoading, setPaymentLoading] = useState(false);
   const user = JSON.parse(localStorage.getItem('comprameXUser') || '{}');
   const isLoggedIn = !!user.id;
@@ -16,93 +12,59 @@ function ProductDetail() {
     fetchProduct();
   }, [id]);
 
-  const fetchProduct = async () => {
-    try {
-      const response = await fetch(
-        `https://dxcyjoabcqsnpkqalqpd.supabase.co/functions/v1/products-api/${id}?isLoggedIn=${isLoggedIn}`
-      );
-      const data = await response.json();
-      if (data.success) {
-        setProduct(data.data);
-      }
-    } catch (error) {
-      console.error('Error fetching product:', error);
-    } finally {
+  const fetchProduct = () => {
+    // Mock product data
+    const mockProduct = {
+      id: parseInt(id),
+      title: 'iPhone 13 Pro Max 256GB en perfectas condiciones',
+      price_mxn: 18000,
+      colonia: 'Roma Norte',
+      city: 'Ciudad de México',
+      state: 'CDMX',
+      description: 'iPhone 13 Pro Max de 256GB en color azul alpino. Usado por 6 meses, en excelentes condiciones. Incluye cargador original, caja y protector de pantalla. Sin ralladuras ni golpes. Batería al 98%.',
+      youtube_url: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+      seller: isLoggedIn ? {
+        id: 2,
+        nickname: 'TechSeller',
+        colonia: 'Roma Norte',
+        city: 'Ciudad de México'
+      } : null,
+      product_images: [
+        { image_url: 'https://picsum.photos/600/600?random=1' },
+        { image_url: 'https://picsum.photos/600/600?random=2' },
+        { image_url: 'https://picsum.photos/600/600?random=3' },
+        { image_url: 'https://picsum.photos/600/600?random=4' }
+      ]
+    };
+    
+    setTimeout(() => {
+      setProduct(mockProduct);
       setLoading(false);
-    }
+    }, 500);
   };
 
-  const handleContactSeller = async () => {
+  const handleContactSeller = () => {
     if (!isLoggedIn) {
       navigate('/login');
       return;
     }
-
-    try {
-      const response = await fetch('https://dxcyjoabcqsnpkqalqpd.supabase.co/functions/v1/conversations-api', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          product_id: product.id,
-          buyer_id: user.id,
-          seller_id: product.seller.id
-        })
-      });
-      const data = await response.json();
-      if (data.success) {
-        setConversationId(data.data.id);
-        setShowChat(true);
-      }
-    } catch (error) {
-      console.error('Error creating conversation:', error);
-    }
+    setShowChat(true);
   };
 
-  const handleBitcoinPayment = async () => {
+  const handleBitcoinPayment = () => {
     if (!isLoggedIn) {
       navigate('/login');
       return;
     }
 
     setPaymentLoading(true);
-    try {
-      // First convert to BTC
-      const convertResponse = await fetch('https://dxcyjoabcqsnpkqalqpd.supabase.co/functions/v1/bitcoin-api/convert', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount_mxn: product.price_mxn })
-      });
-      const convertData = await convertResponse.json();
-      
-      if (convertData.success) {
-        // Create transaction record
-        const transactionResponse = await fetch('https://dxcyjoabcqsnpkqalqpd.supabase.co/functions/v1/bitcoin-api/transaction', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            product_id: product.id,
-            buyer_id: user.id,
-            seller_id: product.seller.id,
-            amount_mxn: product.price_mxn,
-            amount_btc: convertData.data.amount_btc,
-            btc_rate: convertData.data.btc_rate_usd
-          })
-        });
-        const transactionData = await transactionResponse.json();
-        
-        if (transactionData.success) {
-          alert('🟡 Transacción Bitcoin iniciada exitosamente.\n\n' +
-                'En una implementación real, aquí serías redirigido a tu wallet Bitcoin o procesador de pagos.\n\n' +
-                `Cantidad: ${convertData.data.amount_btc.toFixed(8)} BTC\n` +
-                `Equivalente: $${product.price_mxn.toLocaleString()} MXN`);
-        }
-      }
-    } catch (error) {
-      console.error('Error processing Bitcoin payment:', error);
-      alert('Error al procesar el pago con Bitcoin. Por favor intenta de nuevo.');
-    } finally {
+    setTimeout(() => {
+      alert('🟡 Transacción Bitcoin iniciada exitosamente.\n\n' +
+            'En una implementación real, aquí serías redirigido a tu wallet Bitcoin o procesador de pagos.\n\n' +
+            `Cantidad: 0.00021600 BTC\n` +
+            `Equivalente: $${product.price_mxn.toLocaleString()} MXN`);
       setPaymentLoading(false);
-    }
+    }, 2000);
   };
 
   if (loading) {
@@ -178,7 +140,7 @@ function ProductDetail() {
                     <div className="text-4xl font-bold text-green-600 mb-2">
                       ${product.price_mxn.toLocaleString()} MXN
                     </div>
-                    <window.BitcoinPrice priceInMxn={product.price_mxn} showFullDetails={true} />
+                    <BitcoinPrice priceInMxn={product.price_mxn} showFullDetails={true} />
                   </div>
 
                   <div className="flex items-center text-gray-600 mb-4">
@@ -209,7 +171,7 @@ function ProductDetail() {
                     <h3 className="text-xl font-semibold text-gray-800 mb-3">Video</h3>
                     <div className="aspect-video">
                       <iframe
-                        src={product.youtube_url.replace('watch?v=', 'embed/')}
+                        src={product.youtube_url}
                         className="w-full h-full rounded-lg"
                         allowFullScreen
                       ></iframe>
@@ -281,7 +243,7 @@ function ProductDetail() {
       </div>
 
       {/* Chat Modal */}
-      {showChat && conversationId && (
+      {showChat && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden">
             <div className="flex items-center justify-between p-4 border-b">
@@ -293,8 +255,8 @@ function ProductDetail() {
                 ✕
               </button>
             </div>
-            <div className="h-96">
-              <window.Chat conversationId={conversationId} currentUserId={user.id} />
+            <div className="h-96 p-4">
+              <MockChat />
             </div>
           </div>
         </div>
@@ -322,10 +284,6 @@ function ProductImages({ images, title }) {
           src={validImages[currentImage].image_url}
           alt={title}
           className="w-full h-full object-cover"
-          onError={(e) => {
-            e.target.src = '';
-            e.target.style.display = 'none';
-          }}
         />
       </div>
       
@@ -343,10 +301,6 @@ function ProductImages({ images, title }) {
                 src={image.image_url}
                 alt={`${title} ${index + 1}`}
                 className="w-full h-full object-cover"
-                onError={(e) => {
-                  e.target.src = '';
-                  e.target.style.display = 'none';
-                }}
               />
             </button>
           ))}
@@ -356,4 +310,136 @@ function ProductImages({ images, title }) {
   );
 }
 
+function BitcoinPrice({ priceInMxn, showFullDetails = false }) {
+  const [btcData, setBtcData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const mockConversion = () => {
+      const btcRateUSD = 45000;
+      const usdMxnRate = 18.5;
+      const btcRateMXN = btcRateUSD * usdMxnRate;
+      const amountBtc = priceInMxn / btcRateMXN;
+      
+      setBtcData({
+        amount_btc: amountBtc,
+        btc_rate_usd: btcRateUSD,
+        formatted_time: new Date().toLocaleString('es-MX', {
+          hour: '2-digit',
+          minute: '2-digit',
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric'
+        })
+      });
+      setLoading(false);
+    };
+
+    setTimeout(mockConversion, 500);
+  }, [priceInMxn]);
+
+  if (loading) {
+    return (
+      <div className={`${showFullDetails ? 'text-sm' : 'text-xs'} text-gray-500`}>
+        🟡 Calculando precio en BTC...
+      </div>
+    );
+  }
+
+  if (showFullDetails) {
+    return (
+      <div className="bg-gradient-to-r from-orange-50 to-yellow-50 border border-orange-200 rounded-lg p-4">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-lg font-semibold text-orange-800">
+            🟡 {btcData.amount_btc.toFixed(8)} BTC
+          </span>
+        </div>
+        <div className="text-xs text-orange-600">
+          <div>Tasa: ₿1 = ${btcData.btc_rate_usd.toLocaleString()} USD</div>
+          <div className="mt-1">
+            Calculado: {btcData.formatted_time}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="text-xs text-gray-600">
+      🟡 {btcData.amount_btc.toFixed(8)} BTC
+      <div className="text-xs text-gray-400 mt-1">
+        {btcData.formatted_time}
+      </div>
+    </div>
+  );
+}
+
+function MockChat() {
+  const [message, setMessage] = useState('');
+  const [messages, setMessages] = useState([
+    {
+      text: '¡Hola! Me interesa tu iPhone. ¿Está disponible?',
+      sender: 'buyer',
+      time: '14:32'
+    },
+    {
+      text: 'Hola! Sí, está disponible. ¿Tienes alguna pregunta específica?',
+      sender: 'seller',
+      time: '14:35'
+    }
+  ]);
+
+  const sendMessage = () => {
+    if (message.trim()) {
+      setMessages(prev => [...prev, {
+        text: message,
+        sender: 'buyer',
+        time: new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })
+      }]);
+      setMessage('');
+    }
+  };
+
+  return (
+    <div className="flex flex-col h-full">
+      <div className="flex-1 overflow-y-auto space-y-4 mb-4">
+        {messages.map((msg, index) => (
+          <div key={index} className={`flex ${msg.sender === 'buyer' ? 'justify-end' : 'justify-start'}`}>
+            <div className={`max-w-xs px-4 py-2 rounded-lg ${
+              msg.sender === 'buyer' 
+                ? 'bg-green-600 text-white' 
+                : 'bg-gray-200 text-gray-800'
+            }`}>
+              <p className="text-sm">{msg.text}</p>
+              <p className={`text-xs mt-1 ${
+                msg.sender === 'buyer' ? 'text-green-100' : 'text-gray-500'
+              }`}>
+                {msg.time}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+      
+      <div className="flex space-x-2">
+        <input
+          type="text"
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
+          placeholder="Escribe tu mensaje..."
+          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+        />
+        <button
+          onClick={sendMessage}
+          className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg"
+        >
+          Enviar
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export default ProductDetail;
 window.ProductDetail = ProductDetail;

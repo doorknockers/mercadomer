@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router';
 
-function Register() {
+function Register({ navigate }) {
   const [formData, setFormData] = useState({
     email: '',
     nickname: '',
@@ -11,7 +10,6 @@ function Register() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const navigate = useNavigate();
 
   const mexicanStates = [
     'Aguascalientes', 'Baja California', 'Baja California Sur', 'Campeche',
@@ -53,27 +51,17 @@ function Register() {
     setLoading(true);
     setError('');
 
-    try {
-      const response = await fetch('https://dxcyjoabcqsnpkqalqpd.supabase.co/functions/v1/users-api', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      });
+    // Mock registration for demo
+    setTimeout(() => {
+      const newUser = {
+        id: Math.floor(Math.random() * 1000) + 1,
+        ...formData
+      };
       
-      const data = await response.json();
-      
-      if (data.success) {
-        localStorage.setItem('comprameXUser', JSON.stringify(data.data));
-        navigate('/');
-      } else {
-        setError(data.error || 'Error al crear la cuenta');
-      }
-    } catch (error) {
-      console.error('Error registering:', error);
-      setError('Error al crear la cuenta. Intenta de nuevo.');
-    } finally {
+      localStorage.setItem('comprameXUser', JSON.stringify(newUser));
+      navigate('/');
       setLoading(false);
-    }
+    }, 1000);
   };
 
   return (
@@ -195,4 +183,5 @@ function Register() {
   );
 }
 
+export default Register;
 window.Register = Register;
